@@ -5,9 +5,10 @@ import streamlit as st
 from openai import OpenAI
 from playwright.async_api import async_playwright
 
+# Install browsers (cached)
 @st.cache_resource
 def install_playwright():
-    os.system("playwright install chromium")
+    os.system("playwright install chromium --with-deps")
 
 install_playwright()
 
@@ -33,7 +34,7 @@ if "step_logs" not in st.session_state:
 
 # ====================== UI ======================
 st.title("🌐 Autonomous Web-Agent Control Room")
-st.caption("Multi-tool Agent with Visible Thought Process • News / Countries / Personalities")
+st.caption("ReAct Agent • Thought Process Visible • Multi-tool")
 
 with st.sidebar:
     st.subheader("Tools")
@@ -100,31 +101,81 @@ async def run_agent(prompt: str):
     try:
         api_key = st.secrets["OPENAI_API_KEY"]
     except Exception:
-        st.error("OpenAI API key not found in st.secrets.")
+        st.error("OpenAI API key not found in st.secrets. Add it in app settings.")
         return
 
-    st.session_state.step_logs = []  # Reset logs
     client = OpenAI(api_key=api_key)
 
-    system_prompt = """You are a precise web agent. Think step-by-step before every action.
-    Use the best tool for the task. For news and entities prefer dedicated tools."""
+    system_prompt = """You are a precise ReAct web agent. Think step-by-step before every action.
+    Use the best tool for the task. For news use web_search, for people/countries use get_entity_info."""
 
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt}
     ]
 
-    tools = [ ... ]  # (Same tools as previous version - web_search, get_entity_info, interact_with_webpage)
-
-    # Re-insert the full tools definition here (identical to previous version)
+    # Complete Tools Definition
     tools = [
-        {"type": "function", "function": {"name": "interact_with_webpage", "description": "...", "parameters": {...}}},
-        {"type": "function", "function": {"name": "web_search", "description": "...", "parameters": {...}}},
-        {"type": "function", "function": {"name": "get_entity_info", "description": "...", "parameters": {...}}}
+        {
+            "type": "function",
+            "function": {
+                "name": "interact_with_webpage",
+                "description": "Navigate to any URL, click elements, scroll, and extract content.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string"},
+                        "click_selector": {"type": "string"},
+                        "scroll_down": {"type": "boolean"}
+                    },
+                    "required": ["url"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "web_search",
+                "description": "Search the web or news.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "news_mode": {"type": "boolean"}
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_entity_info",
+                "description": "Get information about countries, personalities, companies.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "entity_name": {"type": "string"},
+                        "focus": {"type": "string"}
+                    },
+                    "required": ["entity_name"]
+                }
+            }
+        }
     ]
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"])
+        # Improved launch settings for Streamlit Cloud / containers
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-extensions"
+            ]
+        )
         context = await browser.new_context(viewport={"width": 1280, "height": 900})
         page = await context.new_page()
 
@@ -143,7 +194,7 @@ async def run_agent(prompt: str):
                     msg = response.choices[0].message
                     messages.append(msg)
 
-                    # === THOUGHT VISUALIZATION ===
+                    # Thought Visualization
                     thought = msg.content or "Deciding next action..."
                     with st.expander(f"💭 Thought (Step {turn+1})", expanded=True):
                         st.markdown(f'<div class="thought-box">{thought}</div>', unsafe_allow_html=True)
@@ -153,36 +204,35 @@ async def run_agent(prompt: str):
                         st.markdown(f"### Summary\n{thought}")
                         break
 
-                    # Process each tool call
                     for tool_call in msg.tool_calls:
                         args = json.loads(tool_call.function.arguments)
                         
-                        action_text = f"**Action**: {tool_call.function.name}({args})"
                         with st.expander(f"⚡ Action", expanded=True):
-                            st.write(action_text)
+                            st.write(f"**Tool**: {tool_call.function.name}")
+                            st.write(f"**Args**: {args}")
 
-                        # Execute tool
                         result = None
                         if tool_call.function.name == "interact_with_webpage":
                             result = await execute_browser_action(page, args)
                         elif tool_call.function.name == "web_search":
                             q = args.get("query", "")
-                            mode = "news" if args.get("news_mode") else "search"
-                            url = f"https://news.google.com/search?q={q.replace(' ', '+')}" if mode == "news" else f"https://www.google.com/search?q={q.replace(' ', '+')}"
+                            is_news = args.get("news_mode", False)
+                            base = "https://news.google.com" if is_news else "https://www.google.com"
+                            url = f"{base}/search?q={q.replace(' ', '+')}"
                             result = await execute_browser_action(page, {"url": url, "scroll_down": True})
                         elif tool_call.function.name == "get_entity_info":
-                            entity = args.get("entity_name")
-                            url = f"https://en.wikipedia.org/wiki/{entity.replace(' ', '_')}"
+                            entity = args.get("entity_name", "").replace(" ", "_")
+                            url = f"https://en.wikipedia.org/wiki/{entity}"
                             result = await execute_browser_action(page, {"url": url, "scroll_down": True})
 
                         # Observation
                         obs_preview = result.get("extracted_text", "")[:500] if result else "Error"
                         with st.expander("👁️ Observation", expanded=True):
-                            st.write(f"Status: {result.get('status') if result else 'Failed'}")
-                            st.write(f"URL: {result.get('current_url') if result else 'N/A'}")
-                            st.text_area("Extracted Content Preview", obs_preview, height=150)
+                            st.write(f"Status: {result.get('status', 'Failed')}")
+                            st.write(f"URL: {result.get('current_url', 'N/A')}")
+                            st.text_area("Content Preview", obs_preview, height=150)
 
-                        # Update browser viewport
+                        # Live UI Update
                         if result and "current_url" in result:
                             url_display.markdown(
                                 f'<div class="browser-bar"><span class="dot dot-red"></span>'
@@ -193,7 +243,7 @@ async def run_agent(prompt: str):
                         if result and "screenshot" in result:
                             viewport_display.image(result["screenshot"], use_container_width=True)
 
-                        # Feed back to agent
+                        # Feed observation back
                         messages.append({
                             "role": "tool",
                             "tool_call_id": tool_call.id,
