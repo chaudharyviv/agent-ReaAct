@@ -125,7 +125,7 @@ async def run_agent(prompt: str):
 
     tools = [ ... ]  # Full tools definition (same as last version)
 
-    # === FULL TOOLS (copy from previous response) ===
+    # === FULL TOOLS 
     tools = [
         {"type": "function", "function": {"name": "interact_with_webpage", "description": "Navigate, click, scroll", "parameters": {"type": "object", "properties": {"url": {"type": "string"}, "click_selector": {"type": "string"}, "scroll_down": {"type": "boolean"}}, "required": ["url"]}}},
         {"type": "function", "function": {"name": "web_search", "description": "Search web or news", "parameters": {"type": "object", "properties": {"query": {"type": "string"}, "news_mode": {"type": "boolean"}}, "required": ["query"]}}},
@@ -163,10 +163,55 @@ async def run_agent(prompt: str):
 
                     # Tool execution logic (same as before)
                     for tool_call in msg.tool_calls:
+                        fn_name = tool_call.function.name
                         args = json.loads(tool_call.function.arguments)
-                        # ... (rest of the tool execution code from previous version)
-                        # I kept it short here for brevity - use the full block from my previous response
 
+                        st.markdown(f"🔧 **Tool:** `{fn_name}` → `{json.dumps(args)[:200]}`")
+
+                        # ---- Route the tool call ----
+                        if fn_name == "interact_with_webpage":
+                            result = await execute_browser_action(page, args)
+
+                        elif fn_name == "web_search":
+                            # No search API wired up, so use the browser itself
+                            query = args.get("query", "")
+                            search_url = f"https://duckduckgo.com/html/?q={query.replace(' ', '+')}"
+                            if args.get("news_mode"):
+                                search_url = f"https://news.google.com/search?q={query.replace(' ', '+')}"
+                            result = await execute_browser_action(page, {"url": search_url})
+
+                        elif fn_name == "get_entity_info":
+                            entity = args.get("entity_name", "")
+                            wiki_url = f"https://en.wikipedia.org/wiki/{entity.replace(' ', '_')}"
+                            result = await execute_browser_action(page, {"url": wiki_url})
+
+                        else:
+                            result = {"status": "ERROR", "error": f"Unknown tool: {fn_name}"}
+
+                        # ---- Update the live browser panel ----
+                        if result.get("status") == "SUCCESS":
+                            url_display.markdown(
+                                '<div class="browser-bar"><span class="dot dot-red"></span>'
+                                '<span class="dot dot-yellow"></span><span class="dot dot-green"></span>'
+                                f'<div class="url-bar">{result["current_url"]}</div></div>',
+                                unsafe_allow_html=True
+                            )
+                            viewport_display.image(result["screenshot"], use_container_width=True)
+                        else:
+                            st.error(f"Tool error: {result.get('error', 'unknown')[:300]}")
+
+                        # ---- CRITICAL: append a tool message for THIS tool_call_id ----
+                        tool_payload = {
+                            "status": result.get("status"),
+                            "current_url": result.get("current_url", ""),
+                            "extracted_text": result.get("extracted_text", ""),
+                            "error": result.get("error", ""),
+                        }
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,          # must match exactly
+                            "content": json.dumps(tool_payload),   # never include the screenshot bytes here
+                        })
         finally:
             await context.close()
             await browser.close()
