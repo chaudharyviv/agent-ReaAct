@@ -9,23 +9,17 @@ from playwright.async_api import async_playwright
 # ====================== PLAYWRIGHT INSTALLATION ======================
 @st.cache_resource
 def install_playwright_browsers():
-    """Robust installation for Streamlit Cloud"""
-    st.info("Installing Playwright browsers... (first run only)")
-    try:
-        # Run with proper flags for cloud environments
-        result = subprocess.run(
-            ["playwright", "install", "chromium", "--with-deps"],
-            capture_output=True,
-            text=True,
-            env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "0"}
-        )
-        if result.returncode == 0:
-            st.success("✅ Playwright browsers installed successfully")
-        else:
-            st.warning(f"Installation warning: {result.stderr[:300]}")
-    except Exception as e:
-        st.error(f"Playwright install failed: {str(e)}")
+    """Install Chromium for Playwright (Streamlit Cloud safe)."""
+    result = subprocess.run(
+        [sys.executable, "-m", "playwright", "install", "chromium"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        st.error(f"Playwright install failed:\n{result.stderr[-500:]}")
+        st.stop()  # don't let the app continue to a guaranteed crash
     return True
+
 
 # Run installation
 install_playwright_browsers()
