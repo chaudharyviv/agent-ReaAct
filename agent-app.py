@@ -28,58 +28,173 @@ install_playwright_browsers()
 # ========================= CONFIG =========================
 st.set_page_config(layout="wide", page_title="AI Agent Live Workspace", page_icon="🤖")
 
+# ====================== VIBRANT & VISIBLE STYLES ======================
 st.markdown("""
     <style>
-    .browser-window { border: 2px solid #343a40; border-radius: 8px; background-color: #212529; padding: 4px; box-shadow: 0px 4px 15px rgba(0,0,0,0.3); }
-    .browser-bar { background: #343a40; padding: 8px; border-radius: 4px 4px 0 0; color: #fff; font-family: monospace; font-size: 13px; display: flex; align-items: center; }
-    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    /* Global vibrant theme */
+    .stApp {
+      background: linear-gradient(135deg, #0f1620 0%, #1a2333 100%);
+  }
+    h1, h2, h3, .stMarkdown {
+      color: #ffffff !important;
+    }
+    
+    /* Enhanced browser window */
+    .browser-window { 
+      border: 3px solid #00ffcc; 
+      border-radius: 12px; 
+      background-color: #0a0f1a; 
+      padding: 6px; 
+      box-shadow: 0px 8px 30px rgba(0, 255, 200, 0.3), 
+                  inset 0 0 40px rgba(0, 255, 200, 0.1);
+      transition: box-shadow 0.3s ease;
+    }
+    .browser-window:hover {
+      box-shadow: 0px 12px 40px rgba(0, 255, 200, 0.5);
+    }
+    
+    .browser-bar { 
+      background: linear-gradient(90deg, #1e2a44, #2a3a5a); 
+      padding: 12px 16px; 
+      border-radius: 8px 8px 0 0; 
+      color: #fff; 
+      font-family: monospace; 
+      font-size: 14px; 
+      display: flex; 
+      align-items: center; 
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .dot { 
+      height: 14px; 
+      width: 14px; 
+      border-radius: 50%; 
+      display: inline-block; 
+      margin-right: 8px; 
+      box-shadow: 0 0 6px currentColor;
+    }
     .dot-red { background: #ff5f56; }
     .dot-yellow { background: #ffbd2e; }
     .dot-green { background: #27c93f; }
-    .url-bar { background: #1c1f22; padding: 4px 12px; border-radius: 4px; flex-grow: 1; margin-left: 15px; color: #a9b2c3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .thought-box { background-color: #1e2a38; padding: 12px; border-radius: 6px; border-left: 4px solid #4da6ff; margin-bottom: 10px; }
+    
+    .url-bar { 
+      background: #0f1620; 
+      padding: 6px 16px; 
+      border-radius: 6px; 
+      flex-grow: 1; 
+      margin-left: 20px; 
+      color: #00ffcc; 
+      font-weight: 500;
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      white-space: nowrap; 
+      border: 1px solid #334455;
+    }
+    
+    /* Vibrant thought boxes */
+    .thought-box { 
+      background: linear-gradient(145deg, #1e2a44, #16213a); 
+      padding: 18px; 
+      border-radius: 10px; 
+      border-left: 6px solid #00ffcc; 
+      margin-bottom: 16px; 
+      box-shadow: 0 4px 15px rgba(0, 255, 204, 0.2);
+      color: #e0f0ff;
+      font-size: 15.5px;
+      line-height: 1.55;
+    }
+    
+    /* Sidebar enhancements */
+    .css-1d391kg, .stSidebar {
+      background: linear-gradient(180deg, #0f1620, #1a2333);
+      border-right: 2px solid #00ffcc;
+    }
+    
+    /* Buttons & inputs */
+    .stButton > button {
+      background: linear-gradient(90deg, #00cc99, #00ffcc);
+      color: #0a0f1a;
+      font-weight: bold;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 255, 204, 0.4);
+      transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 204, 0.6);
+    }
+    
+    .stTextInput > div > div > input {
+      background-color: #1e2a44;
+      color: #ffffff;
+      border: 2px solid #334455;
+    }
+    
+    /* Log step highlights */
+    .stMarkdown h3, .element-container div[data-testid="stMarkdownContainer"] h3 {
+      color: #00ffcc !important;
+      text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+      background-color: #16213a !important;
+      border: 1px solid #334455;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # ====================== UI ======================
-st.title("🌐 Autonomous Web-Agent Control Room")
-st.caption("ReAct Agent • Visible Thought Process")
+st.title("🌐 **AUTONOMOUS WEB-AGENT CONTROL ROOM**")
+st.markdown("<h3 style='color:#00ffcc; margin-top:-15px;'>ReAct Agent • Live Execution • Real-time Browser</h3>", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.info("🔑 Make sure OPENAI_API_KEY is added in Streamlit Secrets")
-    st.subheader("Tools")
+    st.info("🔑 **OPENAI_API_KEY** must be set in Streamlit Secrets", icon="🔐")
+    st.subheader("🛠️ Available Tools")
     st.markdown("""
-    - `interact_with_webpage`  
-    - `web_search`  
-    - `get_entity_info`
+    - **`interact_with_webpage`** → Navigate, click, scroll  
+    - **`web_search`** → DuckDuckGo / Google News  
+    - **`get_entity_info`** → Wikipedia lookups
     """)
+    st.markdown("---")
+    st.caption("Made more vibrant for better visibility 🔥")
 
 user_prompt = st.text_input(
-    "Assign mission to the Web Agent:",
-    value="Give me latest news about India and recent activities of Elon Musk."
+    "🎯 **Assign mission to the Web Agent:**",
+    value="Give me latest news about India and recent activities of Elon Musk.",
+    placeholder="E.g. Compare Tesla stock performance and latest SpaceX launches..."
 )
 
-col_agent, col_browser = st.columns([1, 1], gap="large")
+col_agent, col_browser = st.columns([1.05, 1], gap="large")
 
 with col_agent:
     st.subheader("🧠 Agent Thought Process & Logs")
     log_container = st.container()
 
 with col_browser:
-    st.subheader("🖥️ Live Browser Viewport")
+    st.subheader("🖥️ **Live Browser Viewport**")
     url_display = st.empty()
     viewport_display = st.empty()
     
+    # Enhanced initial browser frame
     url_display.markdown(
-        '<div class="browser-bar"><span class="dot dot-red"></span><span class="dot dot-yellow"></span>'
-        '<span class="dot dot-green"></span><div class="url-bar">about:blank</div></div>',
+        '''
+        <div class="browser-window">
+          <div class="browser-bar">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+            <div class="url-bar">about:blank</div>
+          </div>
+        </div>
+        ''',
         unsafe_allow_html=True
     )
-    viewport_display.info("Awaiting task...")
+    viewport_display.info("🚀 Ready. Click **Execute** to launch the agent...")
 
 # ====================== CORE FUNCTIONS ======================
 async def execute_browser_action(page, args: dict):
-    # (Same as before - unchanged)
     target_url = args.get("url")
     click_selector = args.get("click_selector")
     scroll_down = args.get("scroll_down", False)
@@ -124,9 +239,6 @@ async def run_agent(prompt: str):
         {"role": "user", "content": prompt}
     ]
 
-    tools = [ ... ]  # Full tools definition (same as last version)
-
-    # === FULL TOOLS 
     tools = [
         {"type": "function", "function": {"name": "interact_with_webpage", "description": "Navigate, click, scroll", "parameters": {"type": "object", "properties": {"url": {"type": "string"}, "click_selector": {"type": "string"}, "scroll_down": {"type": "boolean"}}, "required": ["url"]}}},
         {"type": "function", "function": {"name": "web_search", "description": "Search web or news", "parameters": {"type": "object", "properties": {"query": {"type": "string"}, "news_mode": {"type": "boolean"}}, "required": ["query"]}}},
@@ -158,23 +270,20 @@ async def run_agent(prompt: str):
                         st.markdown(f'<div class="thought-box">{thought}</div>', unsafe_allow_html=True)
 
                     if not msg.tool_calls:
-                        st.success("✅ Mission Complete")
+                        st.success("✅ **Mission Complete**")
                         st.markdown(f"### Final Answer\n{thought}")
                         break
 
-                    # Tool execution logic (same as before)
                     for tool_call in msg.tool_calls:
                         fn_name = tool_call.function.name
                         args = json.loads(tool_call.function.arguments)
 
                         st.markdown(f"🔧 **Tool:** `{fn_name}` → `{json.dumps(args)[:200]}`")
 
-                        # ---- Route the tool call ----
                         if fn_name == "interact_with_webpage":
                             result = await execute_browser_action(page, args)
 
                         elif fn_name == "web_search":
-                            # No search API wired up, so use the browser itself
                             query = args.get("query", "")
                             search_url = f"https://duckduckgo.com/html/?q={query.replace(' ', '+')}"
                             if args.get("news_mode"):
@@ -189,19 +298,24 @@ async def run_agent(prompt: str):
                         else:
                             result = {"status": "ERROR", "error": f"Unknown tool: {fn_name}"}
 
-                        # ---- Update the live browser panel ----
                         if result.get("status") == "SUCCESS":
                             url_display.markdown(
-                                '<div class="browser-bar"><span class="dot dot-red"></span>'
-                                '<span class="dot dot-yellow"></span><span class="dot dot-green"></span>'
-                                f'<div class="url-bar">{result["current_url"]}</div></div>',
+                                f'''
+                                <div class="browser-window">
+                                  <div class="browser-bar">
+                                    <span class="dot dot-red"></span>
+                                    <span class="dot dot-yellow"></span>
+                                    <span class="dot dot-green"></span>
+                                    <div class="url-bar">{result["current_url"]}</div>
+                                  </div>
+                                </div>
+                                ''',
                                 unsafe_allow_html=True
                             )
                             viewport_display.image(result["screenshot"], use_container_width=True)
                         else:
                             st.error(f"Tool error: {result.get('error', 'unknown')[:300]}")
 
-                        # ---- CRITICAL: append a tool message for THIS tool_call_id ----
                         tool_payload = {
                             "status": result.get("status"),
                             "current_url": result.get("current_url", ""),
@@ -210,13 +324,13 @@ async def run_agent(prompt: str):
                         }
                         messages.append({
                             "role": "tool",
-                            "tool_call_id": tool_call.id,          # must match exactly
-                            "content": json.dumps(tool_payload),   # never include the screenshot bytes here
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(tool_payload),
                         })
         finally:
             await context.close()
             await browser.close()
 
 
-if st.button("🚀 Execute Autonomous Run", type="primary"):
+if st.button("🚀 **Execute Autonomous Run**", type="primary", use_container_width=True):
     asyncio.run(run_agent(user_prompt))
